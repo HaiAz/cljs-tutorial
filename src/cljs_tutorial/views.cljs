@@ -13,9 +13,10 @@
 
 (defn todo-input [{:keys [title on-save on-stop]}]
   (let [val (reagent/atom title)
-        stop #(do (reset! @val "") (when on-stop (on-stop)))
+        stop #(do (reset! val "") (when on-stop (on-stop)))
         save #(let [v (-> @val str str/trim)] (on-save v) (stop))]
     (fn [props]
+      (println "val ===" @val)
       [:input (merge (dissoc props :on-save :on-stop :title)
                      {:type "text"
                       :value @val
@@ -24,6 +25,16 @@
                       :on-change #(reset! val (-> % .-target .-value))
                       :on-key-down #(case (.-which %) 13 (save) 27 (stop) nil)})])
     ))
+
+(defn task-entry
+  []
+  [:header#header
+   [:h1 "todos"]
+   [todo-input
+    {:id "new-todo"
+     :placeholder "What needs to be done?"
+     :on-save #(when (seq %)
+                 (dispatch [:add-todo %]))}]])
 
 (defn todo-item
   []
@@ -47,14 +58,14 @@
         ]])))
 
 (defn todos-list []
-  (let [todos @(subscribe [::subs/todos])]
+  (let [visible-todos @(subscribe [:visible-todos])
+        all-complete? @(subscribe [:all-complete?])]
     [:ul
-     (for [item todos]
+     (for [item visible-todos]
        ^{:key (:id item)} [todo-item item])]))
 
 (defn todo-app []
-  (let [name @(subscribe [::subs/name])]
-    [:div
-     [:h1 "Hello from " name]
-     (todos-list)
-     ]))
+    [:<>
+     [task-entry]
+     (when (seq @(subscribe [:todos])) [todos-list])
+     ])

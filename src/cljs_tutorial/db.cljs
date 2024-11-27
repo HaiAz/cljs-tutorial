@@ -9,11 +9,31 @@
 (s/def ::todo (s/keys :req-un [::id ::title ::done]))
 (s/def ::todos (s/and
                 (s/map-of ::id ::todo)
+                #(instance? PersistentTreeMap %)
                 ))
+
+(s/def ::showing
+  #{:all :active :done})
+
+(s/def ::db (s/keys :req-un [::todos ::showing]))
 
 (def default-db
   {:name "re-frame"
-   :todos
-   [{:id 1 :title "Buy groceries" :done false}
-    {:id 2 :title "Walk the dog" :done true}
-    {:id 3 :title "Finish the report" :done false}]})
+   :todos (sorted-map)
+   :showing :all})
+
+(def ls-key "todos-store")
+
+(defn todos->local-store
+  "Puts todos into localStorage"
+  [todos]
+  (.setItem js/localStorage ls-key (str todos)))
+
+(re-frame/reg-cofx
+ :local-store-todos
+ (fn [cofx _]
+   (assoc cofx :local-store-todos 
+        	 (into (sorted-map)
+                (some->> (.getItem js/localStorage ls-key)
+                         (cljs.reader/read-string)
+                         )))))

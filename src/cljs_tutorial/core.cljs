@@ -19,6 +19,7 @@
     (rdom/render [views/todo-app] root-el)))
 
 (defn init []
+  (println "Initial DB =====")
   (re-frame/dispatch-sync [::events/initialize-db])
   (dev-setup)
   (mount-root))

@@ -29,7 +29,7 @@
 (defn task-entry
   []
   [:header#header
-   [:h1 "todos"]
+   [:h1 "Todo List"]
    [todo-input
     {:id "new-todo"
      :placeholder "What needs to be done?"
@@ -39,27 +39,33 @@
 (defn todo-item
   []
   (let [editing (reagent/atom false)]
-    (fn [{:keys [id title completed]}]
-      [:li {:class (str (when completed "completed ")
+    (fn [{:keys [id title done]}]
+      [:li {:class (str (when done "completed ")
                         (when @editing "editing"))
             :style {:margin-bottom "20px"}}
        [:div.view
         [:input.toggle
          {:type "checkbox"
-          :checked completed
+          :checked done
           :on-change #(dispatch [:toggle-done id])}]
         [:label
          {:on-double-click #(reset! editing true)
           :style {:padding-right "20px"}}
-         id " - " title " - " (str completed)]
+         id " - " title " - " (str done)]
         [:button.destroy
          {:on-click #(dispatch [:delete-todo id])}
          [:label "Delete"]]
+        (when @editing
+          [todo-input
+           {:placeholder "Edit todo"
+            :on-save #(if (seq %)
+                        (dispatch [:save id %])
+                        (println "Do nothing!"))
+            :on-stop #(reset! editing false)}])
         ]])))
 
 (defn todos-list []
-  (let [visible-todos @(subscribe [:visible-todos])
-        all-complete? @(subscribe [:all-complete?])]
+  (let [visible-todos @(subscribe [:visible-todos])]
     [:ul
      (for [item visible-todos]
        ^{:key (:id item)} [todo-item item])]))

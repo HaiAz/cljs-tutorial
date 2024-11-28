@@ -15,49 +15,41 @@
 
 (def ->local-store (after todos->local-store))
 
-(def todo-interceptors [check-spec-interceptor (path :todos) ->local-store]) 
+(def todo-interceptors [(path :todos) ->local-store]) 
 
 (defn allocate-next-id
   [todos]
   ((fnil inc 0) (last (keys todos))))
 
-  (reg-event-fx
-  :initialize-db
+(reg-event-fx
+::initialize-db
    
-  [(inject-cofx :local-store-todos) check-spec-interceptor]
+  [(inject-cofx :local-store-todos)]
   (fn [{:keys [db local-store-todos]} _]
   {:db (assoc default-db :todos local-store-todos)}))
 
-;; (re-frame/reg-event-db
-;;  ::initialize-db
-;;  (fn [_ _]
-;;    default-db))
-
-(re-frame/reg-event-db
+(reg-event-db
  :add-todo
  todo-interceptors
  (fn [todos [_ text]]
  (let [id (allocate-next-id todos)]
-   (println "add todo event ===" todos)
-   (println "add todo id ===" id)
  (assoc todos id {:id id :title text :done false}))))
+
+(reg-event-db
+ :delete-todo
+ todo-interceptors
+ (fn [todos [_ id]]
+   (println "k co j")
+   (dissoc todos id)))
+
+(reg-event-db
+ :toggle-done
+ todo-interceptors
+ (fn [todos [_ id]]
+   (update-in todos [id :done] not)))
 
 (reg-event-db
  :save
  todo-interceptors
  (fn [todos [_ id title]]
    (assoc-in todos [id :title] title)))
-
-(re-frame/reg-event-db
- :delete-todo
- (fn [todos [_ id]]
-   (dissoc todos id)))
-
-;; (re-frame/reg-event-db
-;;  :delete-todo
-;;  (fn [todos [_ id]]
-;;    (println "Delete - Todo id: " todos)
-;;    (let [todos db/default-db]
-;;      (doseq [item todos]
-;;        (println "Item ====" item)))
-;;    (dissoc todos id)))

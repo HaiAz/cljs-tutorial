@@ -21,7 +21,38 @@
   (fn [sorted-todos query-v _]
    (vals sorted-todos)))
 
+(reg-sub
+ :visible-todos
+ (fn [query-v _]
+   [(subscribe [:todos])
+    (subscribe [:showing])])
+ (fn [[todos showing] _]
+   (let [filter-fn (case showing
+                     :active (complement :done)
+                     :done   :done
+                     :all    identity)]
+     (filter filter-fn todos))))
+
 (re-frame/reg-sub
   ::todos
   (fn [db]
     (:todos db)))
+
+(reg-sub
+ :all-complete?
+ :<- [:todos]
+ (fn [todos _]
+   (every? :done todos)))
+
+(reg-sub
+ :completed-count
+ :<- [:todos]
+ (fn [todos _]
+   (count (filter :done todos))))
+
+(reg-sub
+ :footer-counts
+ :<- [:todos]
+ :<- [:completed-count]
+ (fn [[todos completed] _]
+   [(- (count todos) completed) completed]))

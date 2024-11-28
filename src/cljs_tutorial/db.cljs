@@ -18,8 +18,7 @@
 (s/def ::db (s/keys :req-un [::todos ::showing]))
 
 (def default-db
-  {:name "re-frame"
-   :todos (sorted-map)
+  {:todos (sorted-map)
    :showing :all})
 
 (def ls-key "todos-store")
